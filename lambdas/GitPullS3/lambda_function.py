@@ -92,6 +92,10 @@ def pull_repo(repo, branch_name, remote_url, creds):
     repo.head.set_target(remote_branch_id)
     return repo
 
+def log_commit_id(repo, repo_path):
+    commit = repo.revparse_single('HEAD^')
+    with open(repo_path + "/.commit_id", "w") as revision_file:
+        revision_file.write("{0}".format(commit))
 
 def zip_repo(repo_path, repo_name):
     logger.info('Creating zipfile...')
@@ -180,6 +184,7 @@ def lambda_handler(event, context):
         logger.info('creating new repo for %s in %s' % (remote_url, repo_path))
         repo = create_repo(repo_path, remote_url, creds)
     pull_repo(repo, branch_name, remote_url, creds)
+    log_commit_id(repo, repo_path)
     zipfile = zip_repo(repo_path, repo_name)
     push_s3(zipfile, repo_name, outputbucket)
     if cleanup:
